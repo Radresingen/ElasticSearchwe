@@ -27,11 +27,13 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.IOException;
+
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 
 public class Rest_High_Level {
+
     RestHighLevelClient client;
 
     Rest_High_Level(){ //CONSTRUCTER
@@ -50,6 +52,7 @@ public class Rest_High_Level {
         SearchResponse searchResponse = client.search(searchRequest);
 
         SearchHits hits = searchResponse.getHits();
+
 
         long totalHits = hits.getTotalHits();
         float maxScore = hits.getMaxScore();
