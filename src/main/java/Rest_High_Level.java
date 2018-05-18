@@ -153,7 +153,7 @@ public class Rest_High_Level {
         builder.setFlushInterval(TimeValue.timeValueSeconds(10L));
         builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(1L), 3));
 
-        IndexRequest one = new IndexRequest("posts", "doc", "1").
+        /*IndexRequest one = new IndexRequest("posts", "doc", "1").
                 source(XContentType.JSON, "title", "In which order are my Elasticsearch queries executed?");
         IndexRequest two = new IndexRequest("posts", "doc", "2")
                 .source(XContentType.JSON, "title", "Current status and upcoming changes in Elasticsearch");
@@ -164,7 +164,7 @@ public class Rest_High_Level {
         bulkProcessor.add(two);
         bulkProcessor.add(three);
 
-
+    */
 
         boolean terminated = bulkProcessor.awaitClose(30L, TimeUnit.SECONDS);
         bulkProcessor.close();
