@@ -37,6 +37,12 @@ public class logParser {
 
         Map<String,Object> jsonMap = new HashMap<>();
 
+        jsonMap.put("ip","a");
+        jsonMap.put("date","a");
+        jsonMap.put("message","a");
+        jsonMap.put("status","a");
+        jsonMap.put("byte","a");
+
         File file = new File(filePath);
         BufferedReader br = new BufferedReader(new FileReader(file));
 
@@ -73,7 +79,7 @@ public class logParser {
                 else if(t.substring(t.length()-1,t.length()).compareTo("\"") == 0 || flag2){
                     if(t.substring(t.length()-1,t.length()).compareTo("\"") == 0){
                         tmp += t.substring(0,t.length()-1);
-                        jsonMap.put("message",tmp);
+                        jsonMap.put("httpRequest",tmp);
                         tmp = "";
                         flag2 = false;
                     }
