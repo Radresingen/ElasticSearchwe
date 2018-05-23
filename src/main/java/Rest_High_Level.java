@@ -20,7 +20,6 @@ import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.Index;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -33,57 +32,70 @@ import java.util.Map;
 
 public class Rest_High_Level {
 
-    private RestHighLevelClient client; //Main client for everything
-    private BulkProcessor.Listener listener = null;
-    private BulkProcessor bulkProcessor = null;
-    private BulkProcessor.Builder builder = null;
+    private static Rest_High_Level singletonObject = new Rest_High_Level();
+    private static RestHighLevelClient client; //Main client for everything
+    private static BulkProcessor.Listener listener = null;
+    private static BulkProcessor bulkProcessor = null;
+    private static BulkProcessor.Builder builder = null;
 
 
-    Rest_High_Level(){ //CONSTRUCTER
+    private Rest_High_Level(){ //CONSTRUCTER
         client = new RestHighLevelClient(
                 RestClient.builder(
                         new HttpHost("localhost", 9200, "http")));
     }
 
-    public boolean createBulkProcessorListener(){
-       listener = new BulkProcessor.Listener() {
-            @Override
-            public void beforeBulk(long executionId, BulkRequest request) {
+    public static Rest_High_Level getInstance(){
+        return singletonObject;
+    }
+    public static boolean createBulkProcessorListener(){
+        if(listener == null){
+            listener = new BulkProcessor.Listener() {
+                @Override
+                public void beforeBulk(long executionId, BulkRequest request) {
                 /*int numberOfActions = request.numberOfActions();
                 System.out.print("Before BULK Execution ID: "+executionId+"\n");*/
 
-            }
+                }
 
-            @Override
-            public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
+                @Override
+                public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
                 /*System.out.print("After BULK Execution ID: "+executionId
                         +"\nRequest : "+request.getDescription()+"\n Response: "+response.buildFailureMessage()+"\n");*/
-            }
+                }
 
-            @Override
-            public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
-                /*System.out.print("After BULK Execution ID: "+executionId
-                        +" Failure"+failure.toString()+"\n");*/
-            }
-        };
-       createBulkProcessor();
-       return true;
+                @Override
+                public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
+                    System.out.print("After BULK Execution ID: "+executionId
+                            +" Failure"+failure.toString()+"\n");
+                }
+            };
+            createBulkProcessor();
+            return true;
+        }
+
+       return false;
     }
-    public boolean createBulkProcessor(){
-        bulkProcessor = BulkProcessor.builder(client::bulkAsync, listener).build();
-        createbulkProcessorBuilder();
-        return true;
+    public static boolean createBulkProcessor(){
+        if(bulkProcessor == null){
+            bulkProcessor = BulkProcessor.builder(client::bulkAsync, listener).build();
+            createbulkProcessorBuilder();
+            return true;
+        }
+        return false;
     }
 
-    public boolean createbulkProcessorBuilder(){
-        BulkProcessor.Builder builder = BulkProcessor.builder(client::bulkAsync, listener);
-        builder.setBulkActions(500);
-        builder.setBulkSize(new ByteSizeValue(1L, ByteSizeUnit.MB));
-        builder.setConcurrentRequests(0);
-        builder.setFlushInterval(TimeValue.timeValueSeconds(10L));
-        builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(1L), 3));
-       return true;
-
+    public static boolean createbulkProcessorBuilder(){
+        if(builder == null){
+            builder = BulkProcessor.builder(client::bulkAsync, listener);
+            builder.setBulkActions(-1);
+            builder.setBulkSize(new ByteSizeValue(15, ByteSizeUnit.MB));
+            builder.setConcurrentRequests(1);
+            builder.setFlushInterval(TimeValue.timeValueSeconds(10L));
+            builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(1L), 3));
+            return true;
+        }
+        return false;
     }
     public boolean addRequestToBulkProcessor(Object request){
         if(request instanceof IndexRequest){
@@ -104,6 +116,11 @@ public class Rest_High_Level {
         else{
             return false;
         }
+    }
+
+    public boolean flushBulkProcessor(){
+        bulkProcessor.flush();
+        return true;
     }
     public void searchRequest() throws IOException {
         SearchRequest searchRequest = new SearchRequest("posts");

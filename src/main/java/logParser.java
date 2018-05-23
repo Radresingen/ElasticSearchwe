@@ -31,7 +31,7 @@ public class logParser {
 
     public static void fileParser(String filePath) throws IOException, InterruptedException {
 
-        Rest_High_Level mainClient = new Rest_High_Level();
+        Rest_High_Level mainClient = Rest_High_Level.getInstance();
         mainClient.createBulkProcessorListener();
 
         Map<String,Object> jsonMap = new HashMap<>();
@@ -112,7 +112,7 @@ public class logParser {
         }
 
 
-
+        mainClient.flushBulkProcessor();
             //System.out.println(st);
 
 
