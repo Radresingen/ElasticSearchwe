@@ -20,6 +20,7 @@ import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.Index;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -28,7 +29,6 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import java.io.IOException;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 
 public class Rest_High_Level {
@@ -49,21 +49,21 @@ public class Rest_High_Level {
        listener = new BulkProcessor.Listener() {
             @Override
             public void beforeBulk(long executionId, BulkRequest request) {
-                int numberOfActions = request.numberOfActions();
-                System.out.print("Before BULK Execution ID: "+executionId+"\n");
+                /*int numberOfActions = request.numberOfActions();
+                System.out.print("Before BULK Execution ID: "+executionId+"\n");*/
 
             }
 
             @Override
             public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
-                System.out.print("After BULK Execution ID: "+executionId
-                        +"\nRequest : "+request.getDescription()+"\n Response: "+response.buildFailureMessage()+"\n");
+                /*System.out.print("After BULK Execution ID: "+executionId
+                        +"\nRequest : "+request.getDescription()+"\n Response: "+response.buildFailureMessage()+"\n");*/
             }
 
             @Override
             public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
-                System.out.print("After BULK Execution ID: "+executionId
-                        +" Failure"+failure.toString()+"\n");
+                /*System.out.print("After BULK Execution ID: "+executionId
+                        +" Failure"+failure.toString()+"\n");*/
             }
         };
        createBulkProcessor();
@@ -82,37 +82,23 @@ public class Rest_High_Level {
         builder.setConcurrentRequests(0);
         builder.setFlushInterval(TimeValue.timeValueSeconds(10L));
         builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(1L), 3));
-
-        /*IndexRequest one = new IndexRequest("posts", "doc", "1").
-                source(XContentType.JSON, "title", "In which order are my Elasticsearch queries executed?");
-        IndexRequest two = new IndexRequest("posts", "doc", "2")
-                .source(XContentType.JSON, "title", "Current status and upcoming changes in Elasticsearch");
-        IndexRequest three = new IndexRequest("posts", "doc", "3")
-                .source(XContentType.JSON, "title", "The Future of Federated Search in Elasticsearch");
-
-        bulkProcessor.add(one);
-        bulkProcessor.add(two);
-        bulkProcessor.add(three);
-
-    */
-
        return true;
 
     }
     public boolean addRequestToBulkProcessor(Object request){
         if(request instanceof IndexRequest){
             //System.out.println("Index Request");
-            bulkProcessor.add(request);
+            bulkProcessor.add((IndexRequest)request);
             return true;
         }
         else if(request instanceof DeleteRequest){
             //System.out.println("Delete Request");
-            bulkProcessor.add(request);
+            bulkProcessor.add((DeleteRequest)request);
             return true;
         }
         else if(request instanceof UpdateRequest){
             //System.out.println("Update Request");
-            bulkProcessor.add(request);
+            bulkProcessor.add((UpdateRequest)request);
             return true;
         }
         else{
