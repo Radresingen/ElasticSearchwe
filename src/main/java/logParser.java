@@ -1,3 +1,6 @@
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.common.xcontent.XContentType;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -28,7 +31,9 @@ public class logParser {
 
     public static void fileParser(String filePath) throws IOException, InterruptedException {
 
-        Rest_High_Level rhl = new Rest_High_Level();
+        Rest_High_Level mainClient = new Rest_High_Level();
+        mainClient.createBulkProcessorListener();
+
         Map<String,Object> jsonMap = new HashMap<>();
 
         File file = new File(filePath);
@@ -94,7 +99,9 @@ public class logParser {
                             break;
                     }
                     if(flag3 == 3){
-                        //rhl.bulkProcessor("first","document",Integer.toString(i),jsonMap);
+                        IndexRequest request = new IndexRequest("posts", "doc", Integer.toString(i))
+                                .source(jsonMap);
+                        mainClient.addRequestToBulkProcessor(request);
                         flag3=0;
                         break;
                     }
@@ -104,10 +111,6 @@ public class logParser {
             i++;
         }
 
-            //BULK REQUEST İLE BULK PROCESSOR FARKLI FONKSİYONLARA AYIR
-
-            //WHİLE İÇİNDE REQUEST FONKSİYONU ÇAĞIRIP RETURN OLARAK BULKREQUEST AL BUNU BİR
-            //ARRAYLİSTE SAKLA ARDINDAN ARRAYLİSTİ TEK SEFERDE BULKPROCESSOR FONKSİYONUNA VER
 
 
             //System.out.println(st);

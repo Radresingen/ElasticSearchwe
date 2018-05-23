@@ -15,12 +15,11 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
-import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -34,12 +33,91 @@ import java.util.concurrent.TimeUnit;
 
 public class Rest_High_Level {
 
-    RestHighLevelClient client;
+    private RestHighLevelClient client; //Main client for everything
+    private BulkProcessor.Listener listener = null;
+    private BulkProcessor bulkProcessor = null;
+    private BulkProcessor.Builder builder = null;
+
 
     Rest_High_Level(){ //CONSTRUCTER
         client = new RestHighLevelClient(
                 RestClient.builder(
                         new HttpHost("localhost", 9200, "http")));
+    }
+
+    public boolean createBulkProcessorListener(){
+       listener = new BulkProcessor.Listener() {
+            @Override
+            public void beforeBulk(long executionId, BulkRequest request) {
+                int numberOfActions = request.numberOfActions();
+                System.out.print("Before BULK Execution ID: "+executionId+"\n");
+
+            }
+
+            @Override
+            public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
+                System.out.print("After BULK Execution ID: "+executionId
+                        +"\nRequest : "+request.getDescription()+"\n Response: "+response.buildFailureMessage()+"\n");
+            }
+
+            @Override
+            public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
+                System.out.print("After BULK Execution ID: "+executionId
+                        +" Failure"+failure.toString()+"\n");
+            }
+        };
+       createBulkProcessor();
+       return true;
+    }
+    public boolean createBulkProcessor(){
+        bulkProcessor = BulkProcessor.builder(client::bulkAsync, listener).build();
+        createbulkProcessorBuilder();
+        return true;
+    }
+
+    public boolean createbulkProcessorBuilder(){
+        BulkProcessor.Builder builder = BulkProcessor.builder(client::bulkAsync, listener);
+        builder.setBulkActions(500);
+        builder.setBulkSize(new ByteSizeValue(1L, ByteSizeUnit.MB));
+        builder.setConcurrentRequests(0);
+        builder.setFlushInterval(TimeValue.timeValueSeconds(10L));
+        builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(1L), 3));
+
+        /*IndexRequest one = new IndexRequest("posts", "doc", "1").
+                source(XContentType.JSON, "title", "In which order are my Elasticsearch queries executed?");
+        IndexRequest two = new IndexRequest("posts", "doc", "2")
+                .source(XContentType.JSON, "title", "Current status and upcoming changes in Elasticsearch");
+        IndexRequest three = new IndexRequest("posts", "doc", "3")
+                .source(XContentType.JSON, "title", "The Future of Federated Search in Elasticsearch");
+
+        bulkProcessor.add(one);
+        bulkProcessor.add(two);
+        bulkProcessor.add(three);
+
+    */
+
+       return true;
+
+    }
+    public boolean addRequestToBulkProcessor(Object request){
+        if(request instanceof IndexRequest){
+            //System.out.println("Index Request");
+            bulkProcessor.add(request);
+            return true;
+        }
+        else if(request instanceof DeleteRequest){
+            //System.out.println("Delete Request");
+            bulkProcessor.add(request);
+            return true;
+        }
+        else if(request instanceof UpdateRequest){
+            //System.out.println("Update Request");
+            bulkProcessor.add(request);
+            return true;
+        }
+        else{
+            return false;
+        }
     }
     public void searchRequest() throws IOException {
         SearchRequest searchRequest = new SearchRequest("posts");
@@ -52,6 +130,15 @@ public class Rest_High_Level {
         SearchResponse searchResponse = client.search(searchRequest);
 
         SearchHits hits = searchResponse.getHits();
+
+
+        boolean clusterName = true;
+
+        Settings settings = Settings.builder()
+                .put( "cluster.name", clusterName )
+                .put( "client.transport.ignore_cluster_name", true )
+                .put( "client.transport.sniff", true )
+                .build();
 
 
         long totalHits = hits.getTotalHits();
@@ -120,57 +207,7 @@ public class Rest_High_Level {
         return bulkResponse.hasFailures();
     }
 
-    public boolean bulkProcessor(String index, String type,String id) throws InterruptedException {
 
-
-        BulkProcessor.Listener listener = new BulkProcessor.Listener() {
-            @Override
-            public void beforeBulk(long executionId, BulkRequest request) {
-                int numberOfActions = request.numberOfActions();
-                System.out.print("Before BULK Execution ID: "+executionId+"\n");
-
-            }
-
-            @Override
-            public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
-                System.out.print("After BULK Execution ID: "+executionId
-                        +"\nRequest : "+request.getDescription()+"\n Response: "+response.buildFailureMessage()+"\n");
-            }
-
-            @Override
-            public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
-                System.out.print("After BULK Execution ID: "+executionId
-                        +" Failure"+failure.toString()+"\n");
-            }
-        };
-
-        BulkProcessor bulkProcessor = BulkProcessor.builder(client::bulkAsync, listener).build();
-
-        BulkProcessor.Builder builder = BulkProcessor.builder(client::bulkAsync, listener);
-        builder.setBulkActions(500);
-        builder.setBulkSize(new ByteSizeValue(1L, ByteSizeUnit.MB));
-        builder.setConcurrentRequests(0);
-        builder.setFlushInterval(TimeValue.timeValueSeconds(10L));
-        builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(1L), 3));
-
-        /*IndexRequest one = new IndexRequest("posts", "doc", "1").
-                source(XContentType.JSON, "title", "In which order are my Elasticsearch queries executed?");
-        IndexRequest two = new IndexRequest("posts", "doc", "2")
-                .source(XContentType.JSON, "title", "Current status and upcoming changes in Elasticsearch");
-        IndexRequest three = new IndexRequest("posts", "doc", "3")
-                .source(XContentType.JSON, "title", "The Future of Federated Search in Elasticsearch");
-
-        bulkProcessor.add(one);
-        bulkProcessor.add(two);
-        bulkProcessor.add(three);
-
-    */
-
-        boolean terminated = bulkProcessor.awaitClose(30L, TimeUnit.SECONDS);
-        bulkProcessor.close();
-        return terminated;
-
-    }
     public static void main(String[] argv) throws IOException, InterruptedException {
         Rest_High_Level main_client = new Rest_High_Level();
 
@@ -192,11 +229,11 @@ public class Rest_High_Level {
 
         //main_client.updateRequest(index,type,id,source);
 
-        //logParser logger = new logParser("C:\\Users\\serda\\Desktop\\trkvz-live.access.log.6");
+        logParser logger = new logParser("C:\\Users\\serda\\Desktop\\trkvz-live.access.log.6");
 
         //main_client.bulkProcessor("asd","asd","asd");
 
-        main_client.searchRequest();
+        //main_client.searchRequest();
 
         main_client.client.close();
 
