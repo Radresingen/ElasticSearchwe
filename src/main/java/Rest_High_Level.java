@@ -33,10 +33,10 @@ import java.util.Map;
 public class Rest_High_Level {
 
     private static Rest_High_Level singletonObject = new Rest_High_Level();
-    private static RestHighLevelClient client; //Main client for everything
-    private static BulkProcessor.Listener listener = null;
-    private static BulkProcessor bulkProcessor = null;
-    private static BulkProcessor.Builder builder = null;
+    private  RestHighLevelClient client; //Main client for everything
+    private  BulkProcessor.Listener listener = null;
+    private  BulkProcessor bulkProcessor = null;
+    private  BulkProcessor.Builder builder = null;
 
 
     private Rest_High_Level(){ //CONSTRUCTER
@@ -45,10 +45,14 @@ public class Rest_High_Level {
                         new HttpHost("localhost", 9200, "http")));
     }
 
+    public void close(){
+        bulkProcessor.close();
+
+    }
     public static Rest_High_Level getInstance(){
         return singletonObject;
     }
-    public static boolean createBulkProcessorListener(){
+    public  boolean createBulkProcessorListener(){
         if(listener == null){
             listener = new BulkProcessor.Listener() {
                 @Override
@@ -68,6 +72,7 @@ public class Rest_High_Level {
                 public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
                     System.out.print("After BULK Execution ID: "+executionId
                             +" Failure"+failure.toString()+"\n");
+
                 }
             };
             createBulkProcessor();
@@ -76,7 +81,7 @@ public class Rest_High_Level {
 
        return false;
     }
-    public static boolean createBulkProcessor(){
+    public  boolean createBulkProcessor(){
         if(bulkProcessor == null){
             bulkProcessor = BulkProcessor.builder(client::bulkAsync, listener).build();
             createbulkProcessorBuilder();
@@ -85,7 +90,7 @@ public class Rest_High_Level {
         return false;
     }
 
-    public static boolean createbulkProcessorBuilder(){
+    public boolean createbulkProcessorBuilder(){
         if(builder == null){
             builder = BulkProcessor.builder(client::bulkAsync, listener);
             builder.setBulkActions(-1);
@@ -212,8 +217,6 @@ public class Rest_High_Level {
 
 
     public static void main(String[] argv) throws IOException, InterruptedException {
-        Rest_High_Level main_client = new Rest_High_Level();
-
         String index = "first";
         String type = "document";
         String id = "1";
@@ -237,10 +240,6 @@ public class Rest_High_Level {
         //main_client.bulkProcessor("asd","asd","asd");
 
         //main_client.searchRequest();
-
-        main_client.client.close();
-
-
 
     }
 
