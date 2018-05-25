@@ -1,4 +1,5 @@
 import org.apache.http.HttpHost;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.bulk.BackoffPolicy;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -23,6 +24,7 @@ import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -74,6 +76,7 @@ public class Rest_High_Level {
     public static Rest_High_Level getInstance(){
         return singletonObject;
     }
+
     public  boolean createBulkProcessorListener(){
         if(listener == null){
             listener = new BulkProcessor.Listener() {
@@ -175,7 +178,36 @@ public class Rest_High_Level {
 
 
         searchRequest.source(searchSourceBuilder);
+
+
+        /* SYNCHRONOUS EXECUTION
+
         SearchResponse searchResponse = client.search(searchRequest);
+
+        */
+
+        ActionListener<SearchResponse> listener = new ActionListener<SearchResponse>() {
+            @Override
+            public void onResponse(SearchResponse searchResponse) {
+                RestStatus status = searchResponse.status();
+                TimeValue took = searchResponse.getTook();
+                Boolean terminatedEarly = searchResponse.isTerminatedEarly();
+                boolean timedOut = searchResponse.isTimedOut();
+
+                searchToPrint(searchResponse);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+
+            }
+        };
+
+        client.searchAsync(searchRequest,listener);
+
+    }
+    private void searchToPrint(SearchResponse searchResponse){
+        String sourceAsString;
         SearchHits hits = searchResponse.getHits();
         long totalHits = hits.getTotalHits();
         float maxScore = hits.getMaxScore();
@@ -186,8 +218,10 @@ public class Rest_High_Level {
             System.out.println("type: "+hit.getType());
             System.out.println("id: "+hit.getId());
             System.out.println("score: "+hit.getScore());
-        }
 
+            sourceAsString = hit.getSourceAsString();
+            System.out.println(sourceAsString);
+        }
     }
     public void indexRequest(String index, String type, String id, String source) throws IOException {
 
