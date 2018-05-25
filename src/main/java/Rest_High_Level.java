@@ -30,7 +30,6 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import java.io.IOException;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 
 public class Rest_High_Level {
@@ -166,7 +165,7 @@ public class Rest_High_Level {
             searchRequest.types(type);
 
         searchSourceBuilder.from(0);
-        searchSourceBuilder.size(10000);
+        searchSourceBuilder.size(2000);
 
         /*Adding time limit for the query execution time
 
@@ -176,6 +175,18 @@ public class Rest_High_Level {
 
 
         searchRequest.source(searchSourceBuilder);
+        SearchResponse searchResponse = client.search(searchRequest);
+        SearchHits hits = searchResponse.getHits();
+        long totalHits = hits.getTotalHits();
+        float maxScore = hits.getMaxScore();
+        SearchHit[] searchHits = hits.getHits();
+
+        for(SearchHit hit : searchHits){
+            System.out.println("index: "+hit.getIndex());
+            System.out.println("type: "+hit.getType());
+            System.out.println("id: "+hit.getId());
+            System.out.println("score: "+hit.getScore());
+        }
 
     }
     public void indexRequest(String index, String type, String id, String source) throws IOException {
@@ -234,6 +245,8 @@ public class Rest_High_Level {
 
 
     public static void main(String[] argv) throws IOException, InterruptedException {
+        Rest_High_Level mainClient = Rest_High_Level.getInstance();
+
         String index = "first";
         String type = "document";
         String id = "1";
@@ -244,19 +257,8 @@ public class Rest_High_Level {
                 "\"message\":\"trying out Elasticsearch\"" +
                 "}";
 
-        //main_client.indexRequest(index,type,id,source);
-
-        //main_client.getRequest(index,type,id);
-
-        //main_client.deleteRequest(index,type,id);
-
-        //main_client.updateRequest(index,type,id,source);
-
-        logParser logger = new logParser("C:\\Users\\serda\\Desktop\\trkvz-live.access.log.6");
-
-        //main_client.bulkProcessor("asd","asd","asd");
-
-        //main_client.searchRequest();
+        //logParser logger = new logParser("C:\\Users\\serda\\Desktop\\trkvz-live.access.log.6");
+        mainClient.searchRequest("posts","doc");
 
     }
 
