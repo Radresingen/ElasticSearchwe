@@ -28,7 +28,53 @@ public class logParser {
             e.printStackTrace();
         }
     }
+    private static String dateParser(String date){
+        int month=0;
+        switch (date.substring(2,6)){
+            case "Jan":
+                        month = 1;
+                        break;
+            case "Feb":
+                        month = 2;
+                        break;
+            case "Mar":
+                        month = 3;
+                        break;
+            case "Apr":
+                        month = 4;
+                        break;
+            case "May":
+                        month = 5;
+                        break;
+            case "Jun":
+                        month = 6;
+                        break;
+            case "Jul":
+                        month = 7;
+                         break;
+            case "Aug":
+                        month = 8;
+                        break;
+            case "Sep":
+                        month = 9;
+                        break;
+            case "Oct":
+                        month = 10;
+                        break;
+            case "Nov":
+                        month = 11;
+                        break;
+            case "Dec":
+                        month = 12;
+                        break;
 
+        }
+
+        String convertedDate = date.substring(6,11)+"-"+((month < 10) ? ("0"+Integer.toString(month)) : (Integer.toString(month)))
+                +"-"+date.substring(0,3) +"T"+date.substring(11,20)+"Z";
+        System.out.printnln(convertedDate);
+        return convertedDate;
+    }
     public static void fileParser(String filePath) throws IOException, InterruptedException {
 
         Rest_High_Level mainClient = Rest_High_Level.getInstance();
@@ -39,7 +85,7 @@ public class logParser {
 
         jsonMap.put("ip","a");
         jsonMap.put("date","a");
-        jsonMap.put("message","a");
+        jsonMap.put("httpRequest","a");
         jsonMap.put("status","a");
         jsonMap.put("byte","a");
 
@@ -48,7 +94,7 @@ public class logParser {
 
         String st;
         int i=0;
-        while ((st = br.readLine()) != null ){
+        while ((st = br.readLine()) != null & i<10){
             String[] tokens = st.split(" ");
             String tmp="";
             boolean flag1 = false;
@@ -97,21 +143,21 @@ public class logParser {
                             flag3++;
                             break;
                         case 1://STATUS SECTION
-                            jsonMap.put("status",t);
+                            jsonMap.put("status",Integer.parseInt(t));
                             flag3++;
                             break;
                         case 2://BYTE
-                            jsonMap.put("byte",t);
+                            jsonMap.put("byte",Integer.parseInt(t));
                             flag3++;
                             break;
                     }
-                    if(flag3 == 3){
+                    /*if(flag3 == 3){
                         IndexRequest request = new IndexRequest("posts", "doc", Integer.toString(i))
                                 .source(jsonMap);
                         mainClient.addRequestToBulkProcessor(request);
                         flag3=0;
                         break;
-                    }
+                    }*/
 
                 }
             }

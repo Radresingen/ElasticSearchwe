@@ -1,5 +1,7 @@
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
+import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.bulk.BackoffPolicy;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -223,6 +225,36 @@ public class Rest_High_Level {
             System.out.println(sourceAsString);
         }
     }
+    public boolean createIndexRequest(String index,String type,String mapping) throws IOException {
+        CreateIndexRequest request = new CreateIndexRequest(index);
+        if(mapping != null){
+            request.mapping(type,
+                    "  {\n" +
+                            "    \""+type+"\": {\n" +
+                            "      \"properties\": {\n" +
+                            "        \"ip\": {\n" +
+                            "          \"type\": \"ip\"\n" +
+                            "        },\n"+
+                            "        \"date\": {\n" +
+                            "          \"type\": \"date\"\n" +
+                            "        },\n" +
+                            "        \"httpRequest\": {\n" +
+                            "          \"type\": \"text\"\n" +
+                            "        },\n" +
+                            "        \"status\": {\n" +
+                            "          \"type\": \"short\"\n" +
+                            "        },\n" +
+                            "        \"byte\": {\n" +
+                            "          \"type\": \"short\"\n"+
+                            "        }\n" +
+                            "      }\n" +
+                            "    }\n" +
+                            "  }",
+                    XContentType.JSON);
+        }
+        CreateIndexResponse createIndexResponse = client.indices().create(request);
+        return createIndexResponse.isAcknowledged();
+    }
     public void indexRequest(String index, String type, String id, String source) throws IOException {
 
         IndexRequest request = new IndexRequest(
@@ -292,7 +324,10 @@ public class Rest_High_Level {
                 "}";
 
         //logParser logger = new logParser("C:\\Users\\serda\\Desktop\\trkvz-live.access.log.6");
-        mainClient.searchRequest("posts","doc");
+        /*if(mainClient.createIndexRequest("posts","doc","a"))
+            System.out.println("OK");*/
+        //mainClient.searchRequest("posts","doc");
+        mainClient.close();
 
     }
 
