@@ -30,7 +30,7 @@ public class logParser {
     }
     private static String dateParser(String date){
         int month=0;
-        switch (date.substring(2,6)){
+        switch (date.substring(3,6)){
             case "Jan":
                         month = 1;
                         break;
@@ -70,9 +70,8 @@ public class logParser {
 
         }
 
-        String convertedDate = date.substring(6,11)+"-"+((month < 10) ? ("0"+Integer.toString(month)) : (Integer.toString(month)))
-                +"-"+date.substring(0,3) +"T"+date.substring(11,20)+"Z";
-        System.out.printnln(convertedDate);
+        String convertedDate = date.substring(7,11)+"-"+((month < 10) ? ("0"+Integer.toString(month)) : (Integer.toString(month)))+
+                "-"+date.substring(0,2) +"T"+date.substring(11,20)+"Z";
         return convertedDate;
     }
     public static void fileParser(String filePath) throws IOException, InterruptedException {
@@ -83,18 +82,19 @@ public class logParser {
 
         Map<String,Object> jsonMap = new HashMap<>();
 
-        jsonMap.put("ip","a");
+        jsonMap.put("byte","a");
         jsonMap.put("date","a");
         jsonMap.put("httpRequest","a");
+        jsonMap.put("ip","a");
         jsonMap.put("status","a");
-        jsonMap.put("byte","a");
+
 
         File file = new File(filePath);
         BufferedReader br = new BufferedReader(new FileReader(file));
 
         String st;
         int i=0;
-        while ((st = br.readLine()) != null & i<10){
+        while ((st = br.readLine()) != null ){
             String[] tokens = st.split(" ");
             String tmp="";
             boolean flag1 = false;
@@ -109,8 +109,7 @@ public class logParser {
                 else if(t.substring(t.length()-1,t.length()).compareTo("]") == 0 || flag1){
                     if(t.substring(t.length()-1,t.length()).compareTo("]") == 0){
                         tmp += t.substring(0,t.length()-1);
-                        //System.out.println(tmp);
-                        jsonMap.put("date",tmp);
+                        jsonMap.put("date",dateParser(tmp));
                         tmp="";
                         flag1=false;
                     }
@@ -143,21 +142,21 @@ public class logParser {
                             flag3++;
                             break;
                         case 1://STATUS SECTION
-                            jsonMap.put("status",Integer.parseInt(t));
+                            jsonMap.put("status",t);
                             flag3++;
                             break;
                         case 2://BYTE
-                            jsonMap.put("byte",Integer.parseInt(t));
+                            jsonMap.put("byte",t);
                             flag3++;
                             break;
                     }
-                    /*if(flag3 == 3){
+                    if(flag3 == 3){
                         IndexRequest request = new IndexRequest("posts", "doc", Integer.toString(i))
                                 .source(jsonMap);
                         mainClient.addRequestToBulkProcessor(request);
                         flag3=0;
                         break;
-                    }*/
+                    }
 
                 }
             }

@@ -323,11 +323,13 @@ public class Rest_High_Level {
                 "\"message\":\"trying out Elasticsearch\"" +
                 "}";
 
-        //logParser logger = new logParser("C:\\Users\\serda\\Desktop\\trkvz-live.access.log.6");
+        logParser logger = new logParser("C:\\Users\\serda\\Desktop\\trkvz-live.access.log.6");
         /*if(mainClient.createIndexRequest("posts","doc","a"))
-            System.out.println("OK");*/
+            System.out.println("OK");
+*/
+
         //mainClient.searchRequest("posts","doc");
-        mainClient.close();
+        //mainClient.close();
 
     }
 
