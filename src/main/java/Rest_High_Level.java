@@ -13,6 +13,8 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
+import org.elasticsearch.client.AdminClient;
+import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.settings.Settings;
@@ -28,15 +30,16 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import java.io.IOException;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 
 public class Rest_High_Level {
 
     private static Rest_High_Level singletonObject = new Rest_High_Level();
-    private  RestHighLevelClient client; //Main client for everything
-    private  BulkProcessor.Listener listener = null;
-    private  BulkProcessor bulkProcessor = null;
-    private  BulkProcessor.Builder builder = null;
+    private RestHighLevelClient client;
+    private BulkProcessor.Listener listener = null;
+    private BulkProcessor bulkProcessor = null;
+    private BulkProcessor.Builder builder = null;
 
 
     private Rest_High_Level(){ //CONSTRUCTER
@@ -45,6 +48,26 @@ public class Rest_High_Level {
                         new HttpHost("localhost", 9200, "http")));
     }
 
+    /*public void putMapping(String index,String type,String source,boolean flag){
+        //if flag false method will add new type while creating an index
+        //if flag true method will add a new type to an existing index
+
+        if(flag){
+            client.admin().indices().preparePutMapping(index)
+                    .setType(type)
+                    .setSource("{\n" +
+                            "  \"properties\": {\n" +
+                            "    \"name\": {\n" +
+                            "      \"type\": \"text\"\n" +
+                            "    }\n" +
+                            "  }\n" +
+                            "}", XContentType.JSON)
+                    .get();
+        }
+        else{
+
+        }
+    }*/
     public void close(){
         bulkProcessor.close();
 
@@ -127,38 +150,32 @@ public class Rest_High_Level {
         bulkProcessor.flush();
         return true;
     }
-    public void searchRequest() throws IOException {
-        SearchRequest searchRequest = new SearchRequest("posts");
-        searchRequest.types("doc");
+    public void searchRequest(String index,String type) throws IOException {
+        //if index is null then search is not specified.
+        SearchRequest searchRequest;
+        if(index == null)
+             searchRequest = new SearchRequest();
+        else
+            searchRequest = new SearchRequest(index);
 
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+
+
+        if(type != null)
+            searchRequest.types(type);
+
+        searchSourceBuilder.from(0);
+        searchSourceBuilder.size(10000);
+
+        /*Adding time limit for the query execution time
+
+        searchSourceBuilder.timeout(new TimeValue(60,TimeUnit.SECONDS));
+
+        */
+
+
         searchRequest.source(searchSourceBuilder);
-
-        SearchResponse searchResponse = client.search(searchRequest);
-
-        SearchHits hits = searchResponse.getHits();
-
-
-        boolean clusterName = true;
-
-        Settings settings = Settings.builder()
-                .put( "cluster.name", clusterName )
-                .put( "client.transport.ignore_cluster_name", true )
-                .put( "client.transport.sniff", true )
-                .build();
-
-
-        long totalHits = hits.getTotalHits();
-        float maxScore = hits.getMaxScore();
-
-        SearchHit[] searchHits = hits.getHits();
-        for(SearchHit hit : searchHits){
-            System.out.println("INDEX   :   "+hit.getIndex());
-            System.out.println("TYPE    :   "+hit.getType());
-            System.out.println("ID      :   "+hit.getId());
-        }
-
 
     }
     public void indexRequest(String index, String type, String id, String source) throws IOException {
