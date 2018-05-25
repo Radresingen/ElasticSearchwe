@@ -9,7 +9,7 @@
         <module name="ElasticSearch" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
+    <bytecodeTargetLevel target="10">
       <module name="ElasticSearch" target="8" />
     </bytecodeTargetLevel>
   </component>

@@ -1,4 +1,6 @@
 import org.apache.http.HttpHost;
+import org.elasticsearch.Build;
+import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
@@ -12,15 +14,14 @@ import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.main.MainResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
-import org.elasticsearch.client.AdminClient;
-import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
@@ -71,6 +72,17 @@ public class Rest_High_Level {
 
         }
     }*/
+    public void infoRequest() throws IOException {
+        MainResponse response = client.info();
+
+        ClusterName clusterName = response.getClusterName();
+        String clusterUuid = response.getClusterUuid();
+        String nodeName = response.getNodeName();
+        Version version = response.getVersion();
+        Build build = response.getBuild();
+
+        System.out.println("Cluster id: "+ clusterUuid+" Nodename:"+nodeName);
+    }
     public void close(){
         bulkProcessor.close();
 
@@ -323,7 +335,9 @@ public class Rest_High_Level {
                 "\"message\":\"trying out Elasticsearch\"" +
                 "}";
 
-        logParser logger = new logParser("C:\\Users\\serda\\Desktop\\trkvz-live.access.log.6");
+        //logParser logger = new logParser("C:\\Users\\serda\\Desktop\\trkvz-live.access.log.6");
+
+        mainClient.infoRequest();
         /*if(mainClient.createIndexRequest("posts","doc","a"))
             System.out.println("OK");
 */
