@@ -26,6 +26,7 @@ import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
@@ -34,12 +35,15 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.IOException;
 
+import java.util.HashMap;
 import java.util.Map;
+
+import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 
 
 public class Rest_High_Level {
 
-    private static Rest_High_Level singletonObject = new Rest_High_Level();
+    private static Rest_High_Level singletonObject = null;
     private RestHighLevelClient client;
     private BulkProcessor.Listener listener = null;
     private BulkProcessor bulkProcessor = null;
@@ -72,6 +76,7 @@ public class Rest_High_Level {
 
         }
     }*/
+
     public void infoRequest() throws IOException {
         MainResponse response = client.info();
 
@@ -88,6 +93,9 @@ public class Rest_High_Level {
 
     }
     public static Rest_High_Level getInstance(){
+        if(singletonObject == null){
+            singletonObject = new Rest_High_Level();
+        }
         return singletonObject;
     }
 
@@ -335,9 +343,10 @@ public class Rest_High_Level {
                 "\"message\":\"trying out Elasticsearch\"" +
                 "}";
 
-        //logParser logger = new logParser("C:\\Users\\serda\\Desktop\\trkvz-live.access.log.6");
+        logParser logger = new logParser("C:\\Users\\serda\\Desktop\\trkvz-live.access.log.6");
 
-        mainClient.infoRequest();
+        //mainClient.infoRequest();
+        //mainClient.searchRequest("posts","doc");
         /*if(mainClient.createIndexRequest("posts","doc","a"))
             System.out.println("OK");
 */

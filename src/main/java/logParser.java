@@ -1,12 +1,13 @@
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.omg.PortableInterceptor.INACTIVE;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.reflect.Array;
+import java.util.*;
 
 public class logParser {
     String ipAddress;
@@ -78,7 +79,16 @@ public class logParser {
 
         Rest_High_Level mainClient = Rest_High_Level.getInstance();
 
+
+        Integer[] count = new Integer[3];
+
+        //0 for status
+        //1 for count of status
+        //2 for sum of bytes for each status
+
         mainClient.createBulkProcessorListener();
+
+        ArrayList<Integer[]> status = new ArrayList<Integer[]>();
 
         Map<String,Object> jsonMap = new HashMap<>();
 
@@ -99,6 +109,8 @@ public class logParser {
             String tmp="";
             boolean flag1 = false;
             boolean flag2 = false;
+            boolean updateByte = false;
+            int c=0; //to hold information of counter to update byte;
             int flag3 = 0;
             int token=0;
             for (String t : tokens){
@@ -142,10 +154,30 @@ public class logParser {
                             flag3++;
                             break;
                         case 1://STATUS SECTION
-                            jsonMap.put("status",t);
+                            jsonMap.put("status",t);,
+                            //Binary Search yaz
+                            for(int counter = 0;counter<status.size();counter++){
+                                //status code already exist in arraylist so update it
+                                if(Integer.parseInt(t) == status.get(counter)[0]){
+                                    status.get(counter)[1]++;
+                                    updateByte =true;
+                                    c = counter;
+                                }
+                                //new status code create a new one
+                                else{
+                                    Integer[] sc = new Integer[3];
+                                    sc[0] = Integer.parseInt(t);
+                                    sc[1] = 0;
+                                    sc[2] = 0;
+                                }
+                            }
                             flag3++;
                             break;
                         case 2://BYTE
+                            if(updateByte){
+                                status.get(c)[2] += Integer.parseInt(t);
+                                updateByte = false;
+                            }
                             jsonMap.put("byte",t);
                             flag3++;
                             break;
@@ -166,6 +198,12 @@ public class logParser {
 
         mainClient.flushBulkProcessor();
         mainClient.close();
+
+        for(int k=0;k<status.size();k++){
+            System.out.println(status.get(k)[0]);
+            System.out.println(status.get(k)[1]);
+            System.out.println(status.get(k)[2]);
+        }
             //System.out.println(st);
 
 
